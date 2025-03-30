@@ -42,7 +42,7 @@ sigma2 = 0.001
 
 # Начальные условия (пример: гауссов импульс)
 def initial_state(rad, phi):
-    # return 0.1 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001))
+    return 0.1 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001))
     # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.sin(20 * phi) # подходит (но по идее не решение уравнения из-за начальных условие т.е. не мода)
     return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.cos(60 * phi) # подходит
     # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * (np.cos(30 * phi) + np.cos(40 * phi) + np.cos(50 * phi)) # подходит
@@ -143,29 +143,6 @@ def update(frame):
     # Обновление
     u_next[1:Nr-1, :] = 2*u_curr[1:Nr-1, :] - u_prev[1:Nr-1, :] + (c**2 * dt**2) * (radial[1:Nr-1, :] + angular[1:Nr-1, :])
 
-
-    # TEST
-
-
-    # for i in range(1, Nr-1):
-    #     for j in range(Nphi):
-    #         j_prev = (j - 1) % Nphi
-    #         j_next = (j + 1) % Nphi
-            
-    #         # Радиальная часть
-    #         d2u_dr2 = (u_curr[i+1,j] - 2*u_curr[i,j] + u_curr[i-1,j]) / dr**2
-    #         du_dr = (u_curr[i+1,j] - u_curr[i-1,j]) / (2 * dr)
-    #         radial = d2u_dr2 + du_dr / (rad[i])
-            
-    #         # Угловая часть
-    #         d2u_dphi2 = (u_curr[i,j_next] - 2*u_curr[i,j] + u_curr[i,j_prev]) / dphi**2
-    #         angular = d2u_dphi2 / (rad[i]**2)
-            
-    #         # Обновление
-    #         u_next[i,j] = 2*u_curr[i,j] - u_prev[i,j] + (c**2 * dt**2) * (radial + angular)
-
-    #         # if np.abs(u_next).max() > 1:
-    #         #     print(np.abs(u_next).max())
     
     # Граничные условия при rad=R
     u_next[-1, :] = 0.0
