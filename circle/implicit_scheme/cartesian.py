@@ -73,7 +73,12 @@ U_history = []
 for n in range(1, t_steps):
     b = 2 * u_curr - u_prev
     u_next = splinalg.spsolve(A, b)
+
+
+
     u_prev, u_curr = u_curr, u_next
+
+    print(u0.shape, u_prev.shape, u_curr.shape, u_next.shape)
 
     u_grid = np.zeros((N, N))
     u_grid[mask] = u_curr
@@ -87,6 +92,7 @@ ax.set_zlim(-1, 1)
 def update(frame):
     ax.clear()
     ax.set_zlim(-1, 1)
+    # print(X.shape, Y.shape, U_history[frame].shape)
     surf = ax.plot_surface(X, Y, U_history[frame], cmap='viridis', rstride=1, cstride=1)
     return surf,
 
