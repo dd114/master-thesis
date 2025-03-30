@@ -43,7 +43,10 @@ sigma2 = 0.001
 # Начальные условия (пример: гауссов импульс)
 def initial_state(rad, phi):
     # return 0.1 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001))
-    return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.cos(20 * phi)
+    # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.sin(20 * phi) # подходит (но по идее не решение уравнения из-за начальных условие т.е. не мода)
+    return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.cos(60 * phi) # подходит
+    # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * (np.cos(30 * phi) + np.cos(40 * phi) + np.cos(50 * phi)) # подходит
+    # return 0.5 * np.cos(60 * phi) * ((rad) >= 0.95) # подходит
     # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.exp( - ((phi - np.pi) ** 2) / (2 * 0.001))
 
     # return np.exp(-50*(rad - 0.3)**2) * 0.5 * np.sin(phi)
@@ -54,7 +57,7 @@ def initial_state(rad, phi):
 # Начальные условия (пример: гауссов импульс)
 def initial_speed(rad, phi):
     # return -1 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001))
-    # return 5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.cos(20 * phi)
+    # return 5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.cos(30 * phi)
     # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.exp( - ((phi - np.pi) ** 2) / (2 * 0.001))
     
     # return np.exp(-50*(rad - 0.3)**2) * 0.5 * np.sin(phi)
