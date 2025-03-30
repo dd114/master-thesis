@@ -22,8 +22,17 @@ h = x[1] - x[0]  # Шаг сетки
 # Маска для внутренних точек круга
 mask = (X**2 + Y**2) <= R**2
 
+def initial_state(X, Y):
+    return np.exp(-(X**2 + Y**2)/(2*sigma**2)) * mask
+
+    return np.zeros_like(x)
+
+def initial_speed(X, Y):
+
+    return np.zeros_like(X) * mask
+
 # Начальные условия (гауссов импульс в центре)
-u0 = np.exp(-(X**2 + Y**2)/(2*sigma**2)) * mask
+u0 = initial_state(X, Y)
 
 # Создание индексов для внутренних точек
 indices = np.full((N, N), -1, dtype=int)
@@ -56,45 +65,80 @@ A = A.tocsr()
 
 u_prev = u0[mask].flatten().astype(np.float64)
 
-# Вычисление первого шага с использованием начальной скорости (здесь нулевая)
-laplacian_u0 = np.zeros_like(u0)
-for i in range(1, N-1):
-    for j in range(1, N-1):
-        if mask[i, j]:
-            laplacian_u0[i, j] = (u0[i+1, j] - 2*u0[i, j] + u0[i-1, j])/h**2 + \
-                                (u0[i, j+1] - 2*u0[i, j] + u0[i, j-1])/h**2
-laplacian_u0_flat = laplacian_u0[mask].flatten()
-u_curr = u_prev + (c**2 * dt**2 / 2) * laplacian_u0_flat
+# Вычисление первого шага с использованием начальной скорости
+
+speed = initial_speed(X, Y)
+u_curr = u_prev[:] + speed[mask].flatten() * dt
 
 # Сохранение истории для анимации
-U_history = []
+# U_history = []
 
-# Временной цикл
-for n in range(1, t_steps):
-    b = 2 * u_curr - u_prev
-    u_next = splinalg.spsolve(A, b)
+# # Временной цикл
+# for n in range(1, t_steps):
+#     print(u0.shape, u_prev.shape, u_curr.shape)
 
+#     b = 2 * u_curr - u_prev
+#     u_next = splinalg.spsolve(A, b)
+#     print(u0.shape, u_prev.shape, u_curr.shape, u_next.shape)
+#     u_prev, u_curr = u_curr, u_next
 
+#     # u_grid = np.zeros((Nr, Nphi))
+#     # u_grid = u_curr[:]
+#     U_history.append(u_curr.reshape((Nr, Nphi)))
 
-    u_prev, u_curr = u_curr, u_next
+fig = plt.figure(figsize=(12, 10))
+ax = fig.add_subplot(111, projection='3d')
+ax.set_title(f'Начальное состояние', fontsize=14, fontweight="bold")
+surface = ax.plot_surface(X, Y, u0, cmap='viridis')
+ax.set_zlim(-1, 1)
 
-    print(u0.shape, u_prev.shape, u_curr.shape, u_next.shape)
+ax.set_xlabel("X", fontsize=14, fontweight="bold")
+ax.set_ylabel("Y", fontsize=14, fontweight="bold")
+ax.set_zlabel("U", fontsize=14, fontweight="bold")
 
-    u_grid = np.zeros((N, N))
-    u_grid[mask] = u_curr
-    U_history.append(u_grid)
+# Начальная скорость
+fig = plt.figure(figsize=(12, 10))
+ax = fig.add_subplot(111, projection='3d')
+ax.set_title(f'Начальная скорость', fontsize=14, fontweight="bold")
+surface = ax.plot_surface(X, Y, speed, cmap='viridis')
+ax.set_zlim(-1, 1)
+
+ax.set_xlabel("X", fontsize=14, fontweight="bold")
+ax.set_ylabel("Y", fontsize=14, fontweight="bold")
+ax.set_zlabel("U", fontsize=14, fontweight="bold")
 
 # Создание анимации
-fig = plt.figure()
+fig = plt.figure(figsize=(12, 10))
 ax = fig.add_subplot(111, projection='3d')
 ax.set_zlim(-1, 1)
 
+t_curr = 0
+
 def update(frame):
+    global u_prev, u_curr,t_curr
+    
+    t_curr += dt
+
+    b = 2 * u_curr - u_prev
+    u_next = splinalg.spsolve(A, b)
+    # print(u0.shape, u_prev.shape, u_curr.shape, u_next.shape)
+    print(u_next.max())
+    u_prev, u_curr = u_curr, u_next
+
     ax.clear()
+    ax.set_title(f'текущее время = {round(t_curr, 4)}, dt = {round(dt, 4)}, dx=dy = {round(h, 4)}', fontsize=14, fontweight="bold")
+    
+    ax.set_xlabel("X", fontsize=14, fontweight="bold")
+    ax.set_ylabel("Y", fontsize=14, fontweight="bold")
+    ax.set_zlabel("U", fontsize=14, fontweight="bold")
+
     ax.set_zlim(-1, 1)
-    # print(X.shape, Y.shape, U_history[frame].shape)
-    surf = ax.plot_surface(X, Y, U_history[frame], cmap='viridis', rstride=1, cstride=1)
+
+    u_grid = np.zeros((N, N))
+    u_grid[mask] = u_curr
+
+    surf = ax.plot_surface(X, Y, u_grid, cmap='viridis', rstride=1, cstride=1)
     return surf,
 
-ani = animation.FuncAnimation(fig, update, frames=len(U_history), interval=50, blit=False)
+ani = animation.FuncAnimation(fig, update, frames=5, interval=10, blit=False)
 plt.show()
