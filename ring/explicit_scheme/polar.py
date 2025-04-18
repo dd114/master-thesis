@@ -29,7 +29,10 @@ offset = +1e-4
 
 # Сетка
 rad = np.linspace(r, R, Nr)
-phi = np.linspace(0, 2*np.pi, Nphi)
+phi = np.linspace(0, 2*np.pi, Nphi, endpoint=True)
+
+print(f"phi[0] = {phi[0]}, phi[-1] = {phi[-1]}")
+
 Rad_grid, Phi_grid = np.meshgrid(rad, phi, indexing='ij')
 
 # Инициализация
@@ -40,11 +43,19 @@ amp = 0.5
 expect = 0.8
 sigma2 = 0.001
 
+from scipy import special
+
+m = 1 # Bessel order
+n = 3 # number of root
+
+alpha_m = special.jn_zeros(m, n) / R 
+
 # Начальные условия (пример: гауссов импульс)
 def initial_state(rad, phi):
-    return 0.1 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001))
+    # return special.jv(m, alpha_m[-1] * rad) * np.cos(m * phi)
+    # return 0.1 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001))
     # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.sin(20 * phi) # подходит (но по идее не решение уравнения из-за начальных условие т.е. не мода)
-    return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.cos(60 * phi) # подходит
+    return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.sin(60 * phi) # подходит
     # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * (np.cos(30 * phi) + np.cos(40 * phi) + np.cos(50 * phi)) # подходит
     # return 0.5 * np.cos(60 * phi) * ((rad) >= 0.95) # подходит
     # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.exp( - ((phi - np.pi) ** 2) / (2 * 0.001))

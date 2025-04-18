@@ -21,7 +21,20 @@ X, Y = np.meshgrid(x, y)
 mask = (X**2 + Y**2) <= R**2  # Маска внутренних точек круга
 
 # Начальные условия
-u_curr = np.exp(-(X**2 + Y**2) / (sigma**2)) * mask
+from scipy import special
+
+m = 2 # Bessel order
+n = 3 # number of root
+
+alpha_m = special.jn_zeros(m, n) / R 
+
+# Начальные условия (пример: гауссов импульс)
+def initial_state(x, y):
+    # return special.jv(m, alpha_m[-1] * np.sqrt(x**2 + y**2)) * np.cos(1 * np.arctan2(y, x))
+    return 0.5 * np.exp( - ((x - 0.9) ** 2) / (2 * 0.001)) * np.sin(60 * y)
+
+u_curr = initial_state(X, Y) * mask
+# u_curr = np.exp(-(X**2 + Y**2) / (sigma**2)) * mask
 u_prev = np.zeros_like(u_curr)
 
 # Вычисление лапласиана для начального условия

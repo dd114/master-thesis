@@ -7,8 +7,8 @@ import matplotlib.animation as animation
 # Параметры задачи
 r = 0.1
 R = 1.0           # Радиус круга
-Nr = 150            # Количество узлов по r
-Nphi = 250            # Количество узлов по phi
+Nr = 100            # Количество узлов по r
+Nphi = 150            # Количество узлов по phi
 c = 1.0           # Скорость волны
 sigma = 0.2       # Параметр начального гауссова распределения
 t_steps = 100     # Количество временных шагов
@@ -34,7 +34,16 @@ dphi = phi[1] - phi[0]  # Шаг сетки
 # Маска для внутренних точек круга
 # mask = ((X**2 + Y**2) <= R**2) * ((X**2 + Y**2) >= 0.1)
 
+from scipy import special
+
+m = 1 # Bessel order
+n = 3 # number of root
+
+alpha_m = special.jn_zeros(m, n) / R 
+
+# Начальные условия (пример: гауссов импульс)
 def initial_state(rad, phi):
+    return special.jv(m, alpha_m[-1] * rad) * np.cos(m * phi)
     # return 0.1 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) 
     return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.cos(60 * phi)
 

@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 # Параметры задачи
 R = 1.0           # Радиус круга
 c = 1.0           # Скорость распространения волны
-h = 0.02          # Шаг пространственной сетки
+h = 0.01          # Шаг пространственной сетки
 dt = 0.9 * h / (c * np.sqrt(2))  # Шаг времени (условие Куранта)
 Tmax = 5.0        # Время моделирования
 sigma = 0.1       # Параметр начального гауссова импульса
@@ -21,8 +21,22 @@ X, Y = np.meshgrid(x, y)
 mask = (X**2 + Y**2) <= R**2  # Маска внутренних точек круга
 
 # Начальные условия
+from scipy import special
+
+m = 1 # Bessel order
+n = 3 # number of root
+
+alpha_m = special.jn_zeros(m, n) / R 
+
+# Начальные условия (пример: гауссов импульс)
+def initial_state(x, y):
+    # return special.jv(m, alpha_m[-1] * np.sqrt(x**2 + y**2)) * np.sin(1 * np.arctan2(y, x))
+    # return 0.5 * np.exp( - ((x - 0.95) ** 2) / (2 * 0.001)) * np.sin(60 * y)
+    return 0.5 * np.exp(-((X**2 + Y**2 - 0.9) ** 2) / (sigma**2)) * np.cos(60 * np.arctan2(Y, X))
+
+u_curr = initial_state(X, Y) * mask
 # u_curr = (1 * np.exp( - ((X - 0.8) ** 2) / (2 * 0.001)) * np.exp( - ((Y - 0.8) ** 2) / (2 * 0.001))) * mask
-u_curr = (np.exp(-(X**2 + Y**2) / (sigma**2)) * 1 * np.sin(1 * np.arctan2(Y, X))) * mask
+# u_curr = (np.exp(-(X**2 + Y**2) / (sigma**2)) * 1 * np.sin(1 * np.arctan2(Y, X))) * mask
 # u_curr = (np.exp(- np.abs((X**2 + Y**2 - 0.81) )/ (sigma**2)) ) * mask
 u_prev = np.zeros_like(u_curr)
 

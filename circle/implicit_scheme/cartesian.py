@@ -22,8 +22,18 @@ h = x[1] - x[0]  # Шаг сетки
 # Маска для внутренних точек круга
 mask = (X**2 + Y**2) <= R**2
 
-def initial_state(X, Y):
-    return np.exp(-(X**2 + Y**2)/(2*sigma**2)) * mask
+# Начальные условия
+from scipy import special
+
+m = 1 # Bessel order
+n = 3 # number of root
+
+alpha_m = special.jn_zeros(m, n) / R 
+
+# Начальные условия (пример: гауссов импульс)
+def initial_state(x, y):
+    # return special.jv(m, alpha_m[-1] * np.sqrt(x**2 + y**2)) * np.cos(1 * np.arctan2(y, x)) * mask
+    return 0.5 * np.exp( - ((x - 0.9) ** 2) / (2 * 0.001)) * np.sin(60 * y) * mask
 
     return np.zeros_like(x)
 
