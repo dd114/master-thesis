@@ -42,6 +42,8 @@ x0r, y0r = r - 0.05, -R
 ar, br = R - r, 2 * R
 rectangle_mask = (X >= x0r) & (X <= x0r + ar) & (Y >= y0r) & (Y <= y0r + br)
 
+gallery_strip_mask = circle_mask & ((X**2 + Y**2) >= (0.9 * r) ** 2)
+
 mask = circle_mask  | rectangle_mask # Маска внутренних точек, объединение
 # mask = ((~ellipse_mask) & circle_mask) | rectangle_mask # Маска внутренних точек, вычитание
 # mask = circle_mask # Маска внутренних точек
@@ -57,6 +59,14 @@ yb = Y[boundary]
 xc, yc, = X[circle_mask], Y[circle_mask]
 xe, ye, = X[ellipse_mask], Y[ellipse_mask]
 xr, yr, = X[rectangle_mask], Y[rectangle_mask]
+xgs, ygs, = X[gallery_strip_mask], Y[gallery_strip_mask]
+
+# метрика
+def metric1(f_u):
+    u_abs = np.abs(f_u)
+    u_abs_max = u_abs.max()
+
+    return ((u_abs_max - (10 * u_abs.mean())) / u_abs_max)
 
 # Начальные условия
 
@@ -70,53 +80,52 @@ def initial_state(x, y):
     # return special.jv(m, alpha_m[-1] * np.sqrt(x**2 + y**2)) * np.sin(1 * np.arctan2(y, x))
     # return 0.5 * np.exp( - ((x - 0.95) ** 2) / (2 * 0.001)) * np.sin(60 * y) # для круга
     return np.where(y < -0.5 * R, 0.5 * np.exp( - ((x - (x0r + (R - x0r) / 2)) ** 2) / (2 * 0.001)) * np.sin(60 * y), 0) # для волновода
+    # return np.where((y > -0.5 * R) & (y < 0.5 * R), 0.5 * np.exp( - ((x - (x0r + (R - x0r) / 2)) ** 2) / (2 * 0.001)) * np.sin(5 * y), 0) # для волновода
     # return 0.5 * np.exp(-((X**2 + Y**2 - 0.9) ** 2) / (sigma**2)) * np.cos(60 * np.arctan2(Y, X))
     # return 0.5 * np.exp(-((X**2 + Y**2 - 0.9) ** 2) / (sigma**2))
     return np.ones_like(X)
 
-# u_curr = initial_state(X, Y) * circle_mask
-u_curr = initial_state(X, Y) * rectangle_mask
+# Начальные условия 
+def initial_speed(rad, phi):
 
-u_prev = np.zeros_like(u_curr)
+    return np.zeros_like(rad)
+
+# u_prev = initial_state(X, Y) * circle_mask
+u_prev = initial_state(X, Y) * rectangle_mask
+
+speed = initial_speed(X, Y)
+u_curr: np.array = u_prev[:, :] + speed * dt
 
 
 
 # Начальное состояние
-fig = plt.figure(figsize=(12, 10))
+fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111, projection='3d')
 ax.set_title(f'Начальное состояние', fontsize=14, fontweight="bold")
 surface = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=1, cstride=1)
-ax.plot(xc, yc, color='r', linewidth=4)
-ax.plot(xe, ye, color='g', linewidth=4)
-ax.plot(xr, yr, color='b', linewidth=4)
+ax.scatter(xc, yc, color='r', linewidth=4)
+ax.scatter(xe, ye, color='g', linewidth=4)
+ax.scatter(xr, yr, color='b', linewidth=4)
+ax.scatter(xgs, ygs, color='y', linewidth=4)
 ax.set_zlim(-1, 1)
 
 ax.set_xlabel("X", fontsize=14, fontweight="bold")
 ax.set_ylabel("Y", fontsize=14, fontweight="bold")
 ax.set_zlabel("U", fontsize=14, fontweight="bold")
 
-# Вычисление лапласиана для начального условия
-laplacian = np.zeros_like(u_curr)
-for i in range(N):
-    for j in range(N):
-        if mask[i, j]:
-            left = u_curr[i-1, j] if i > 0 else 0
-            right = u_curr[i+1, j] if i < N-1 else 0
-            up = u_curr[i, j+1] if j < N-1 else 0
-            down = u_curr[i, j-1] if j > 0 else 0
-            laplacian[i, j] = left + right + up + down - 4 * u_curr[i, j]
 
-u_prev = u_curr + 0.5 * (c * dt / h)**2 * laplacian
-u_prev *= mask  # Применение граничных условий
 
 # Настройка анимации
-fig = plt.figure(figsize=(12, 10))
+fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111, projection='3d')
 surf = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=1, cstride=1)
 ax.set_zlim(-1, 1)
 
+my_iter = 0
+
 def update(frame):
-    global u_prev, u_curr, t_curr
+    global u_prev, u_curr, t_curr, mask, my_iter
+
     laplacian = np.zeros_like(u_curr)
     
     # Вычисление лапласиана
@@ -133,15 +142,17 @@ def update(frame):
     u_next = 2 * u_curr - u_prev + (c * dt / h)**2 * laplacian
     u_next *= mask
     
-    u_prev, u_curr = u_curr.copy(), u_next
+    u_prev, u_curr = u_curr, u_next
     
     # Обновление графика
     ax.clear()
     ax.set_title(f'текущее время = {round(t_curr, 4)}, dt = {round(dt, 4)}, h = {round(h, 4)}', fontsize=14, fontweight="bold")
-    surf = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=2, cstride=2)
+    surf = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=5, cstride=5)
     ax.plot(xc, yc, color='r', linewidth=4)
-    ax.plot(xe, ye, color='g', linewidth=4)
+    ax.scatter(xe, ye, color='g', linewidth=4)
     ax.plot(xr, yr, color='b', linewidth=4)
+    ax.scatter(xgs, ygs, color='y', linewidth=4)
+
 
     ax.set_zlim(-1, 1)
 
@@ -149,6 +160,20 @@ def update(frame):
     ax.set_ylabel('Y')
 
     t_curr += dt
+
+    
+    print("my_iter =", my_iter)
+    print("t_curr =", t_curr)
+    print("abs max =", np.abs(u_curr[circle_mask]).max())
+    print("abs mean =", np.abs(u_curr[circle_mask]).mean())
+    print("energy =", np.sum(u_curr[circle_mask] ** 2))
+    print("gallery metric =", np.sum(u_curr[gallery_strip_mask] ** 2) / np.sum(u_curr[circle_mask] ** 2))
+    print("metric1 =", metric1(u_curr[circle_mask]))
+
+    if t_curr > 2.5:
+        mask = circle_mask
+
+    my_iter +=1 
 
     return surf,
 
