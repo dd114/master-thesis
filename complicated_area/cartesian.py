@@ -114,6 +114,12 @@ ax.set_ylabel("Y", fontsize=14, fontweight="bold")
 ax.set_zlabel("U", fontsize=14, fontweight="bold")
 
 
+number_steps = int(12 // dt)
+
+time2file = np.zeros(number_steps)
+gallery_scores2file = np.zeros(number_steps)
+
+
 
 # Настройка анимации
 fig = plt.figure(figsize=(10, 10))
@@ -124,7 +130,7 @@ ax.set_zlim(-1, 1)
 my_iter = 0
 
 def update(frame):
-    global u_prev, u_curr, t_curr, mask, my_iter
+    global u_prev, u_curr, t_curr, mask, gallery_strip2file, my_iter
 
     laplacian = np.zeros_like(u_curr)
     
@@ -147,7 +153,7 @@ def update(frame):
     # Обновление графика
     ax.clear()
     ax.set_title(f'текущее время = {round(t_curr, 4)}, dt = {round(dt, 4)}, h = {round(h, 4)}', fontsize=14, fontweight="bold")
-    surf = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=5, cstride=5)
+    # surf = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=5, cstride=5)
     ax.plot(xc, yc, color='r', linewidth=4)
     ax.scatter(xe, ye, color='g', linewidth=4)
     ax.plot(xr, yr, color='b', linewidth=4)
@@ -161,16 +167,26 @@ def update(frame):
 
     t_curr += dt
 
-    
+    gallery_score = np.sum(u_curr[gallery_strip_mask] ** 2) / np.sum(u_curr[circle_mask] ** 2)
+
     print("my_iter =", my_iter)
     print("t_curr =", t_curr)
     print("abs max =", np.abs(u_curr[circle_mask]).max())
     print("abs mean =", np.abs(u_curr[circle_mask]).mean())
     print("energy =", np.sum(u_curr[circle_mask] ** 2))
-    print("gallery metric =", np.sum(u_curr[gallery_strip_mask] ** 2) / np.sum(u_curr[circle_mask] ** 2))
+    print("gallery metric =", gallery_score)
     print("metric1 =", metric1(u_curr[circle_mask]))
 
-    if t_curr > 2.5:
+    if my_iter < number_steps:
+        time2file[my_iter] = t_curr
+        gallery_scores2file[my_iter] = gallery_score
+    else:
+        print("Files are ready")
+        np.save('gallery_score', gallery_scores2file)
+        np.save('time_series', time2file)
+
+
+    if t_curr > 3:
         mask = circle_mask
 
     my_iter +=1 
