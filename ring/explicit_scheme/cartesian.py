@@ -10,6 +10,7 @@ h = 0.01          # Шаг пространственной сетки
 dt = 0.9 * h / (c * np.sqrt(2))  # Шаг времени (условие Куранта)
 Tmax = 5.0        # Время моделирования
 sigma = 0.1       # Параметр начального гауссова импульса
+t_curr = 0
 
 print(f"dt = {dt}")
 
@@ -31,7 +32,7 @@ alpha_m = special.jn_zeros(m, n) / R
 # Начальные условия (пример: гауссов импульс)
 def initial_state(x, y):
     # return special.jv(m, alpha_m[-1] * np.sqrt(x**2 + y**2)) * np.sin(1 * np.arctan2(y, x))
-    # return 0.5 * np.exp( - ((x - 0.95) ** 2) / (2 * 0.001)) * np.sin(60 * y)
+    return 0.5 * np.exp( - ((x - 0.95) ** 2) / (2 * 0.001)) * np.sin(60 * y)
     return 0.5 * np.exp(-((X**2 + Y**2 - 0.9) ** 2) / (sigma**2)) * np.cos(60 * np.arctan2(Y, X))
 
 u_curr = initial_state(X, Y) * mask
@@ -61,7 +62,7 @@ surf = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=1, cstride=1)
 ax.set_zlim(-1, 1)
 
 def update(frame):
-    global u_prev, u_curr
+    global u_prev, u_curr, t_curr
     laplacian = np.zeros_like(u_curr)
     
     # Вычисление лапласиана
@@ -82,8 +83,13 @@ def update(frame):
     
     # Обновление графика
     ax.clear()
-    surf = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=1, cstride=1)
+
+    ax.set_title(f'текущее время = {round(t_curr, 4)}, dt = {round(dt, 4)}, h = {round(h, 4)}', fontsize=14, fontweight="bold")
+    surf = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=2, cstride=2)
     ax.set_zlim(-1, 1)
+
+    t_curr += dt
+
     return surf,
 
 # Создание анимации

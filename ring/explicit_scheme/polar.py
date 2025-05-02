@@ -13,7 +13,7 @@ c = 1.0           # Скорость волны
 # Nr = 200           # Число узлов по rad
 # Nphi = 300         # Число узлов по φ
 Nr = 150           # Число узлов по rad
-Nphi = 250         # Число узлов по φ
+Nphi = 400         # Число узлов по φ
 dr = R / (Nr - 1) # Шаг по rad
 dphi = 2 * np.pi / Nphi  # Шаг по φ
 dt = 0.99 * min(dr, dphi, r, dphi * r) / (c * np.sqrt(2))  # Шаг по времени (условие Куранта); np.sqrt(3)?
@@ -55,7 +55,8 @@ def initial_state(rad, phi):
     # return special.jv(m, alpha_m[-1] * rad) * np.cos(m * phi)
     # return 0.1 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001))
     # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.sin(20 * phi) # подходит (но по идее не решение уравнения из-за начальных условие т.е. не мода)
-    return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.sin(60 * phi) # подходит
+    # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.sin(60 * phi) # подходит
+    return np.where(phi < 2 * np.pi / 36, 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.sin(60 * phi), 0) # волновод
     # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * (np.cos(30 * phi) + np.cos(40 * phi) + np.cos(50 * phi)) # подходит
     # return 0.5 * np.cos(60 * phi) * ((rad) >= 0.95) # подходит
     # return 0.5 * np.exp( - ((rad - 0.9) ** 2) / (2 * 0.001)) * np.exp( - ((phi - np.pi) ** 2) / (2 * 0.001))

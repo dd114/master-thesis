@@ -38,7 +38,7 @@ ax.set_ylim(-max_a_b, max_a_b)
 # ax.set_zlim(-1, 1)
 ax.plot_surface(X, Y, u, cmap='viridis')
 
-phi = np.pi / 2
+phi = np.pi / 4
 
 new_X, new_Y = X * np.cos(phi) + Y * -np.sin(phi), X * np.sin(phi) + Y * np.cos(phi)
 
