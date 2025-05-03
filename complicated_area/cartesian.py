@@ -10,7 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 R = 1.1
 r = 1           # Радиус круга
 c = 1.0           # Скорость распространения волны
-h = 0.01          # Шаг пространственной сетки
+h = 0.005          # Шаг пространственной сетки
 dt = 0.9 * h / (c * np.sqrt(2))  # Шаг времени (условие Куранта)
 Tmax = 5.0        # Время моделирования
 sigma = 0.1       # Параметр начального гауссова импульса
@@ -50,11 +50,11 @@ mask = circle_mask  | rectangle_mask # Маска внутренних точе�
 # mask = ellipse_mask # Маска внутренних точек
 # mask = rectangle_mask # Маска внутренних точек
 
-eroded = ndimage.binary_erosion(mask)
-boundary = mask & ~eroded
+# eroded = ndimage.binary_erosion(mask)
+# boundary = mask & ~eroded
 
-xb = X[boundary]
-yb = Y[boundary]
+# xb = X[boundary]
+# yb = Y[boundary]
 
 xc, yc, = X[circle_mask], Y[circle_mask]
 xe, ye, = X[ellipse_mask], Y[ellipse_mask]
@@ -127,12 +127,13 @@ ax = fig.add_subplot(111, projection='3d')
 surf = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=1, cstride=1)
 ax.set_zlim(-1, 1)
 
+laplacian = np.zeros_like(u_curr)
+
 my_iter = 0
 
 def update(frame):
-    global u_prev, u_curr, t_curr, mask, gallery_strip2file, my_iter
+    global u_prev, u_curr, t_curr, mask, laplacian, gallery_strip2file, my_iter
 
-    laplacian = np.zeros_like(u_curr)
     
     # Вычисление лапласиана
     for i in range(N):
@@ -153,7 +154,7 @@ def update(frame):
     # Обновление графика
     ax.clear()
     ax.set_title(f'текущее время = {round(t_curr, 4)}, dt = {round(dt, 4)}, h = {round(h, 4)}', fontsize=14, fontweight="bold")
-    # surf = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=5, cstride=5)
+    surf = ax.plot_surface(X, Y, u_curr, cmap='viridis', rstride=10, cstride=10)
     ax.plot(xc, yc, color='r', linewidth=4)
     ax.scatter(xe, ye, color='g', linewidth=4)
     ax.plot(xr, yr, color='b', linewidth=4)
