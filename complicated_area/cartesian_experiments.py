@@ -97,8 +97,8 @@ def start_calc(core, start, end, step, semi_axis1, semi_axis2):
     # for w in range(80, 90, 2):
     for w in range(start, end, step):
 
-        mask = circle_mask  | rectangle_mask # Маска внутренних точек, объединение
-        # mask = ((~ellipse_mask) & circle_mask) | rectangle_mask # Маска внутренних точек, вычитание
+        # mask = circle_mask  | rectangle_mask # Маска внутренних точек, объединение
+        mask = ((~ellipse_mask) & circle_mask) | rectangle_mask # Маска внутренних точек, вычитание
         # mask = circle_mask # Маска внутренних точек
         # mask = ellipse_mask # Маска внутренних точек
         # mask = rectangle_mask # Маска внутренних точек
@@ -199,8 +199,8 @@ def start_calc(core, start, end, step, semi_axis1, semi_axis2):
             else:
                 print("Files are ready")
                 
-                np.save(os.path.join('results', f'gallery_score_w{w}_a{a}_b{b}'), gallery_scores2file)
-                np.save(os.path.join('results', 'time_series'), time2file)
+                np.save(os.path.join('m_ellipse_results', f'gallery_score_w{w}_a{a}_b{b}'), gallery_scores2file)
+                np.save(os.path.join('m_ellipse_results', 'time_series'), time2file)
                 break
 
 
@@ -214,33 +214,57 @@ def start_calc(core, start, end, step, semi_axis1, semi_axis2):
         # ani = FuncAnimation(fig, update, frames=int(Tmax/dt), interval=50, blit=False)
         # plt.show()
 
+def chunked(lst, n):
+    """Генератор, возвращающий сегменты по n элементов."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
 if __name__ == '__main__':
-    processes = []
     params = []
 
-    # from itertools import product
-    # comb = list(product([10, 50, 90], [0.05, 0.15, 0.3], [0.05, 0.25, 0.5]))
-    # print(comb)
+    from itertools import product
+    combs = list(product([10, 40, 70, 90], [0.05, 0.15, 0.3], [0.05, 0.25, 0.5]))
+    print("combs =", combs)
 
     point_start = 70
     segment_end = 2
 
     number_of_cores = 15
 
-    for core in range(0, number_of_cores):
-       params.append((core, point_start + core * segment_end, point_start + (core + 1) * segment_end, 2))
+    for i, comb in enumerate(combs):
+       core = i % number_of_cores
+       params.append((core, comb[0], comb[0] + 1, 1, comb[1], comb[2]))
+
+    chunks = list(chunked(params, number_of_cores))
+    print("chunks =", chunks)
+    print("len(chunks) =", len(chunks))
 
     # creating processes
-    for param in params:
-        processes.append(multiprocessing.Process(target=start_calc, args=param))
+    for chunk in list(chunked(params, number_of_cores)):
+        print("chunk =", chunk)
+        processes = []
 
-    # starting processes
-    for core, p in enumerate(processes):
-        p.start()
+        for param in chunk: 
+
+            print("param = ", param)
+            processes.append(multiprocessing.Process(target=start_calc, args=param))
+
+        for core, p in enumerate(processes):
+            p.start()
 
         # starting processes
-    for core, p in enumerate(processes):
-        p.join()
+        for core, p in enumerate(processes):
+            p.join()
+
+            
+
+    # # starting processes
+    # for core, p in enumerate(processes):
+    #     p.start()
+
+    ## starting processes
+    # for core, p in enumerate(processes):
+    #     p.join()
 
     # p1.start()
     # p2.start()
