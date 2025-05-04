@@ -8,7 +8,7 @@ from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 
 # Параметры задачи
-R = 2.5
+R = 1.5
 r = 1           # Радиус круга
 c = 1.0           # Скорость распространения волны
 h = 0.01         # Шаг пространственной сетки
@@ -20,7 +20,7 @@ t_curr = 0
 
 print(f"dt = {dt}")
 
-a, b = 0.3, 0.1
+a, b = 0.3, 0.05
 # a, b = 1 / np.sqrt(2), 1 / np.sqrt(2)
 max_a_b = max(a, b)
 N = int(2 * R / h) + 1
@@ -29,9 +29,10 @@ x = np.linspace(-R, R, N)
 y = np.linspace(-R, R, N)
 X, Y = np.meshgrid(x, y)
 
-phi = np.pi / 4
+phi = np.pi / 2
 
-x_0, y_0 = 1 / np.sqrt(2), 1 / np.sqrt(2)
+# x_0, y_0 = 1 / np.sqrt(2), 1 / np.sqrt(2)
+x_0, y_0 = 0, 1
 
 new_X, new_Y = (X - x_0) * np.cos(phi) + (Y - y_0) * np.sin(phi), (X - x_0) * -np.sin(phi) + (Y - y_0) * np.cos(phi)
 
@@ -49,9 +50,9 @@ rectangle_mask2 = (X >= x0r2) & (X <= x0r2 + ar2) & (Y >= y0r2) & (Y <= y0r2 + b
 
 gallery_strip_mask = circle_mask & ((X**2 + Y**2) >= (0.9 * r) ** 2)
 
-mask = circle_mask  | rectangle_mask1 # Маска внутренних точек, объединение
-mask = circle_mask  | rectangle_mask1 | rectangle_mask2 # Маска внутренних точек, объединение
-# mask = ((~ellipse_mask) & circle_mask) | rectangle_mask1 # Маска внутренних точек, вычитание
+# mask = circle_mask  | rectangle_mask1 # Маска внутренних точек, объединение
+# mask = circle_mask  | rectangle_mask1 | rectangle_mask2 # Маска внутренних точек, объединение
+mask = ((~ellipse_mask) & circle_mask) | rectangle_mask1 # Маска внутренних точек, вычитание
 # mask = circle_mask # Маска внутренних точек
 # mask = ellipse_mask # Маска внутренних точек
 # mask = rectangle_mask1 # Маска внутренних точек
@@ -87,7 +88,7 @@ alpha_m = special.jn_zeros(m, n) / R
 def initial_state(x, y):
     # return special.jv(m, alpha_m[-1] * np.sqrt(x**2 + y**2)) * np.sin(1 * np.arctan2(y, x))
     # return 0.5 * np.exp( - ((x - 0.95) ** 2) / (2 * 0.001)) * np.sin(60 * y) # для круга
-    return np.where(y < -0.5 * r, 0.5 * np.exp( - ((x - (x0r1 + ar1 / 2)) ** 2) / (2 * 0.001)) * np.sin(60 * y), 0) # для волновода
+    return np.where(y < -0.5 * r, 0.5 * np.exp( - ((x - (x0r1 + ar1 / 2)) ** 2) / (2 * 0.001)) * np.sin(70 * y), 0) # для волновода
     # return np.where((y > -0.5 * r) & (y < 0.5 * r), 0.5 * np.exp( - ((x - (x0r1 + ar1 / 2)) ** 2) / (2 * 0.001)) * np.sin(60 * y), 0) # для волновода (волна в центре)
     return np.where(y < -0.5 * R, 0.5 * np.exp( - ((x - (x0r1 + ar1 / 2)) ** 2) / (2 * 0.001)) * (np.sin(60 * y) + np.sin(10 * y)), 0) # для волновода
     # return np.where((y > -0.5 * R) & (y < 0.5 * R), 0.5 * np.exp( - ((x - (x0r1 + ar1 / 2)) ** 2) / (2 * 0.001)) * np.sin(5 * y), 0) # для волновода
@@ -125,7 +126,7 @@ ax.set_ylabel("Y", fontsize=14, fontweight="bold")
 ax.set_zlabel("U", fontsize=14, fontweight="bold")
 
 
-number_steps = int(12 // dt)
+number_steps = int(20 // dt)
 
 time2file = np.zeros(number_steps)
 gallery_scores2file = np.zeros(number_steps)
@@ -191,12 +192,14 @@ def update(frame):
     print("abs max =", np.abs(u_curr[circle_mask]).max())
     print("abs mean =", np.abs(u_curr[circle_mask]).mean())
     print("energy =", np.sum(u_curr ** 2))
-    print("energy circle=", np.sum(u_curr[circle_mask] ** 2))
-    print("energy tube =", np.sum(u_curr[rectangle_mask1] ** 2))
+    print("energy circle =", np.sum(u_curr[circle_mask] ** 2))
+    print("energy rectangle1 =", np.sum(u_curr[rectangle_mask1] ** 2))
+    print("energy rectangle2 =", np.sum(u_curr[rectangle_mask2] ** 2))
     print("=========")
     print("leaking in circle =", leaking_in_circle_score)
     print("leaking out circle =", leaking_out_circle_score)
     print("gallery score =", gallery_score)
+    print()
 
     # u_f = RectBivariateSpline(x, y, u_curr)
     # print("int(sin(60*y)) =", integrate.dblquad(lambda x, y: np.sin(60 * y) * u_f(x, y), x0r1, x0r1 + ar1, y0r1, y0r1 + br1)[0])             
@@ -211,8 +214,10 @@ def update(frame):
         np.save('time_series', time2file)
 
 
-    # if t_curr > 3:
-    #     mask = circle_mask | rectangle_mask2
+    if t_curr > 4.0:
+        # mask = circle_mask | rectangle_mask2
+        mask = ((~ellipse_mask) & circle_mask)
+        # mask = (ellipse_mask | circle_mask)
 
     my_iter +=1 
 
