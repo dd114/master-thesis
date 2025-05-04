@@ -105,10 +105,10 @@ def start_calc(core, w, semi_axis1=0, semi_axis2=0):
     # for w in range(80, 90, 2):
     # for w in range(start, end, step):
 
-    # mask = circle_mask  | rectangle_mask1 # Маска внутренних точек, объединение
+    mask = circle_mask  | rectangle_mask1 # Маска внутренних точек, объединение
     # mask = circle_mask  | rectangle_mask1 | rectangle_mask2 # Маска внутренних точек, объединение
     # mask = ((~ellipse_mask) & circle_mask) | rectangle_mask1 # Маска внутренних точек, вычитание
-    mask = (ellipse_mask | circle_mask) | rectangle_mask1 # Маска внутренних точек, сложение
+    # mask = (ellipse_mask | circle_mask) | rectangle_mask1 # Маска внутренних точек, сложение
     # mask = circle_mask # Маска внутренних точек
     # mask = ellipse_mask # Маска внутренних точек
     # mask = rectangle_mask1 # Маска внутренних точек
@@ -220,9 +220,12 @@ def start_calc(core, w, semi_axis1=0, semi_axis2=0):
             leaking_out_circle_score2file[my_iter] = leaking_out_circle_score
         else:
             print("Files are ready")
+
+            np.save(os.path.join('gallery_score', f'gallery_score_w{w}'), gallery_scores2file)
+            np.save(os.path.join('gallery_score', 'time_series'), time2file)
             
-            np.save(os.path.join('p_ellipse_results', f'gallery_score_w{w}_a{a}_b{b}'), gallery_scores2file)
-            np.save(os.path.join('p_ellipse_results', 'time_series'), time2file)
+            # np.save(os.path.join('p_ellipse_results', f'gallery_score_w{w}_a{a}_b{b}'), gallery_scores2file)
+            # np.save(os.path.join('p_ellipse_results', 'time_series'), time2file)
 
             # np.save(os.path.join('m_ellipse_results', f'gallery_score_w{w}_a{a}_b{b}'), gallery_scores2file)
             # np.save(os.path.join('m_ellipse_results', 'time_series'), time2file)
@@ -239,7 +242,8 @@ def start_calc(core, w, semi_axis1=0, semi_axis2=0):
         if t_curr > 4.0:
             # mask = circle_mask | rectangle_mask2
             # mask = ((~ellipse_mask) & circle_mask)
-            mask = (ellipse_mask | circle_mask)
+            # mask = (ellipse_mask | circle_mask)
+            mask = circle_mask
 
         my_iter +=1 
 
@@ -260,22 +264,22 @@ if __name__ == '__main__':
     params = []
 
     # 1st exper start
-    # combs = list(range(10, 102, 5))
-    # print("combs =", combs)
-
-    # for i, comb in enumerate(combs):
-    #    core = i % number_of_cores
-    #    params.append((core, comb))
-    # 1st exper end
-
-
-    # 2nd exper start
-    combs = list(product([10, 40, 70, 90], [0.05, 0.15, 0.3], [0.05, 0.25, 0.5]))
+    combs = list(range(10, 102, 5))
     print("combs =", combs)
 
     for i, comb in enumerate(combs):
        core = i % number_of_cores
-       params.append((core, comb[0], comb[1], comb[2]))
+       params.append((core, comb))
+    # 1st exper end
+
+
+    # 2nd exper start
+    # combs = list(product([10, 40, 70, 90], [0.05, 0.15, 0.3], [0.05, 0.25, 0.5]))
+    # print("combs =", combs)
+
+    # for i, comb in enumerate(combs):
+    #    core = i % number_of_cores
+    #    params.append((core, comb[0], comb[1], comb[2]))
     # 2nd exper end
 
 
